@@ -1,0 +1,136 @@
+name: AI Quality CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * *'  # Daily at 6 AM
+
+jobs:
+  # ─── Smoke Tests ───
+  smoke-tests:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Start mock API
+        run: python mocks/mock_api.py &
+      - name: Wait for services
+        run: sleep 3
+      - name: Run smoke tests
+        run: pytest tests/ -m smoke -v --tb=short
+      - name: Upload smoke report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-report
+          path: reports/
+
+  # ─── API Tests ───
+  api-tests:
+    name: API Tests
+    runs-on: ubuntu-latest
+    needs: smoke-tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Start mock API
+        run: python mocks/mock_api.py &
+      - name: Wait for services
+        run: sleep 3
+      - name: Run API tests
+        run: pytest tests/api/ -v --html=reports/api_report.html --self-contained-html --junitxml=reports/api_junit.xml
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-test-report
+          path: reports/
+
+  # ─── LLM Quality Tests ───
+  llm-tests:
+    name: LLM Quality Tests
+    runs-on: ubuntu-latest
+    needs: smoke-tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run LLM tests
+        run: pytest tests/llm/ -v --html=reports/llm_report.html --self-contained-html --junitxml=reports/llm_junit.xml
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: llm-test-report
+          path: reports/
+
+  # ─── Integration Tests ───
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [api-tests, llm-tests]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Start mock API
+        run: python mocks/mock_api.py &
+      - name: Wait for services
+        run: sleep 3
+      - name: Run integration tests
+        run: pytest tests/integration/ -v --html=reports/integration_report.html --self-contained-html
+
+  # ─── Load Tests ───
+  load-tests:
+    name: Load Tests
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Start mock API
+        run: python mocks/mock_api.py &
+      - name: Wait for services
+        run: sleep 3
+      - name: Run load test
+        run: locust -f tests/performance/locustfile.py --headless -u 50 -r 5 -t 30s --host http://localhost:9000 --csv=reports/load_test
+
+  # ─── Quality Gate ───
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    needs: [api-tests, llm-tests, integration-tests]
+    if: always()
+    steps:
+      - name: Check results
+        run: |
+          echo "✅ All test stages completed"
+          echo "Check individual job results for pass/fail status"
