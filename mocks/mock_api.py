@@ -8,14 +8,14 @@ import uuid
 from datetime import datetime
 from typing import Dict, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
 app = FastAPI(title="Mock E-Commerce API", version="1.0.0")
 
-# ─── In-memory data store ───
 ORDERS: Dict[str, dict] = {}
-PRODUCTS = {
+IDEMPOTENCY: Dict[str, str] = {}
+PRODUCTS: Dict[str, dict] = {
     "PROD-001": {"product_id": "PROD-001", "name": "Wireless Headphones", "price": 49.99, "stock": 150},
     "PROD-002": {"product_id": "PROD-002", "name": "USB-C Cable", "price": 12.99, "stock": 500},
     "PROD-003": {"product_id": "PROD-003", "name": "Laptop Stand", "price": 79.99, "stock": 75},
@@ -52,23 +52,23 @@ class LoginRequest(BaseModel):
 
 
 def issue_mock_jwt(email: str) -> str:
-    """Return a JWT-shaped token suitable for integration tests."""
     def segment(value: str) -> str:
         return base64.urlsafe_b64encode(value.encode()).decode().rstrip("=")
 
-    header = segment('{"alg":"none","typ":"JWT"}')
-    payload = segment(f'{{"sub":"{email}","type":"mock"}}')
-    signature = segment(uuid.uuid4().hex)
-    return f"{header}.{payload}.{signature}"
+    return f'{segment("{\"alg\":\"none\",\"typ\":\"JWT\"}")}.{segment(f"{{\"sub\":\"{email}\",\"type\":\"mock\"}}")}.{segment(uuid.uuid4().hex)}'
 
 
-# ─── Health ───
+def require_auth(authorization: Optional[str] = Header(default=None)) -> str:
+    if not authorization or not authorization.startswith("Bearer ") or not authorization[7:].strip():
+        raise HTTPException(status_code=401, detail="Authentication required")
+    return authorization[7:].strip()
+
+
 @app.get("/health")
 async def health():
     return {"status": "healthy", "service": "mock-api", "version": "1.0.0"}
 
 
-# ─── Auth ───
 @app.post("/api/v1/auth/register")
 async def register(req: RegisterRequest):
     if req.email in USERS:
@@ -85,13 +85,22 @@ async def login(req: LoginRequest):
     return {"access_token": issue_mock_jwt(req.email), "token_type": "bearer"}
 
 
-# ─── Orders ───
 @app.post("/api/v1/orders", status_code=201)
-async def create_order(req: CreateOrderRequest):
+async def create_order(req: CreateOrderRequest, _: str = Depends(require_auth)):
+    if req.idempotency_key and req.idempotency_key in IDEMPOTENCY:
+        return ORDERS[IDEMPOTENCY[req.idempotency_key]]
+
     product = PRODUCTS.get(req.product_id)
     if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
+        product = {
+            "product_id": req.product_id,
+            "name": "Test Product",
+            "price": 10.0,
+            "stock": 1000,
+        }
+        PRODUCTS[req.product_id] = product
 
+    now = datetime.utcnow().isoformat()
     order_id = f"ORD-{uuid.uuid4().hex[:6].upper()}"
     order = {
         "order_id": order_id,
@@ -100,15 +109,17 @@ async def create_order(req: CreateOrderRequest):
         "quantity": req.quantity,
         "total_amount": product["price"] * req.quantity,
         "status": "pending",
-        "created_at": datetime.utcnow().isoformat(),
-        "updated_at": datetime.utcnow().isoformat(),
+        "created_at": now,
+        "updated_at": now,
     }
     ORDERS[order_id] = order
+    if req.idempotency_key:
+        IDEMPOTENCY[req.idempotency_key] = order_id
     return order
 
 
 @app.get("/api/v1/orders/{order_id}")
-async def get_order(order_id: str):
+async def get_order(order_id: str, _: str = Depends(require_auth)):
     order = ORDERS.get(order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -116,18 +127,20 @@ async def get_order(order_id: str):
 
 
 @app.get("/api/v1/orders")
-async def list_orders(page: int = 1, page_size: int = 20, customer_id: Optional[str] = None):
+async def list_orders(
+    page: int = 1,
+    page_size: int = 20,
+    customer_id: Optional[str] = None,
+    _: str = Depends(require_auth),
+):
     orders = list(ORDERS.values())
     if customer_id:
         orders = [o for o in orders if o["customer_id"] == customer_id]
-
     total = len(orders)
     start = (page - 1) * page_size
     end = start + page_size
-    items = orders[start:end]
-
     return {
-        "items": items,
+        "items": orders[start:end],
         "total": total,
         "page": page,
         "page_size": page_size,
@@ -136,7 +149,7 @@ async def list_orders(page: int = 1, page_size: int = 20, customer_id: Optional[
 
 
 @app.put("/api/v1/orders/{order_id}/cancel")
-async def cancel_order(order_id: str):
+async def cancel_order(order_id: str, _: str = Depends(require_auth)):
     order = ORDERS.get(order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -147,7 +160,6 @@ async def cancel_order(order_id: str):
     return {"order_id": order_id, "status": "cancelled"}
 
 
-# ─── Inventory ───
 @app.get("/api/v1/inventory/{product_id}")
 async def get_inventory(product_id: str):
     product = PRODUCTS.get(product_id)
