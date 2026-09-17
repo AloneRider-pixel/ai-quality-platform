@@ -9,7 +9,7 @@ class BaseAPITest:
     """Base class for API tests with common setup/teardown."""
 
     base_url = "http://localhost:8000"
-    
+
     @pytest.fixture(autouse=True)
     def setup(self):
         """Set up API client before each test."""
@@ -34,7 +34,6 @@ class BaseAPITest:
 
     def assert_response_time(self, response, max_ms: float = 5000):
         """Assert response was received within time limit."""
-        # This requires the response to have timing info
         pass
 
 
@@ -49,6 +48,10 @@ class BaseLLMTest:
         """Set up LLM test configuration."""
         self.results = []
         yield
+
+    def _simulate_rag_response(self, question: str, context: str) -> str:
+        """Simulate a deterministic RAG response from retrieved context."""
+        return f"Based on our information: {context[:500]}"
 
 
 class BaseIntegrationTest:
