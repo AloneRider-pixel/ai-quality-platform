@@ -34,7 +34,7 @@ jobs:
         run: pytest tests/ -m smoke -v --tb=short
       - name: Upload reports
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: smoke-report
           path: reports/
@@ -56,7 +56,7 @@ jobs:
       - run: pytest tests/api/ -v --html=reports/api_report.html --self-contained-html --junitxml=reports/api_junit.xml
       - name: Upload report
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: api-test-report
           path: reports/
@@ -79,7 +79,7 @@ jobs:
         run: pytest tests/llm/ -v --html=reports/llm_report.html --self-contained-html --junitxml=reports/llm_junit.xml
       - name: Upload report
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: llm-test-report
           path: reports/
