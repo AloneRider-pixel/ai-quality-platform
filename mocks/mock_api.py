@@ -2,13 +2,14 @@
 Mock API Service - FastAPI-based mock server for isolated testing.
 Provides predictable responses for API tests without external dependencies.
 """
-import random
+import base64
+import re
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
-from fastapi import FastAPI, HTTPException, Header, Query
-from pydantic import BaseModel, Field
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field, field_validator
 
 app = FastAPI(title="Mock E-Commerce API", version="1.0.0")
 
@@ -22,6 +23,7 @@ PRODUCTS = {
     "PROD-005": {"product_id": "PROD-005", "name": "Webcam HD", "price": 89.99, "stock": 100},
 }
 USERS: Dict[str, dict] = {}
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 class CreateOrderRequest(BaseModel):
@@ -33,13 +35,31 @@ class CreateOrderRequest(BaseModel):
 
 class RegisterRequest(BaseModel):
     email: str
-    password: str
+    password: str = Field(min_length=8)
     full_name: str
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, value: str) -> str:
+        if not EMAIL_RE.fullmatch(value):
+            raise ValueError("Invalid email format")
+        return value
 
 
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+
+def issue_mock_jwt(email: str) -> str:
+    """Return a JWT-shaped token suitable for integration tests."""
+    def segment(value: str) -> str:
+        return base64.urlsafe_b64encode(value.encode()).decode().rstrip("=")
+
+    header = segment('{"alg":"none","typ":"JWT"}')
+    payload = segment(f'{{"sub":"{email}","type":"mock"}}')
+    signature = segment(uuid.uuid4().hex)
+    return f"{header}.{payload}.{signature}"
 
 
 # ─── Health ───
@@ -54,7 +74,7 @@ async def register(req: RegisterRequest):
     if req.email in USERS:
         raise HTTPException(status_code=409, detail="Email already registered")
     USERS[req.email] = {"email": req.email, "password": req.password, "full_name": req.full_name}
-    return {"access_token": f"mock-token-{uuid.uuid4().hex[:8]}", "token_type": "bearer"}
+    return {"access_token": issue_mock_jwt(req.email), "token_type": "bearer"}
 
 
 @app.post("/api/v1/auth/login")
@@ -62,7 +82,7 @@ async def login(req: LoginRequest):
     user = USERS.get(req.email)
     if not user or user["password"] != req.password:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    return {"access_token": f"mock-token-{uuid.uuid4().hex[:8]}", "token_type": "bearer"}
+    return {"access_token": issue_mock_jwt(req.email), "token_type": "bearer"}
 
 
 # ─── Orders ───
@@ -71,7 +91,7 @@ async def create_order(req: CreateOrderRequest):
     product = PRODUCTS.get(req.product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    
+
     order_id = f"ORD-{uuid.uuid4().hex[:6].upper()}"
     order = {
         "order_id": order_id,
@@ -100,12 +120,12 @@ async def list_orders(page: int = 1, page_size: int = 20, customer_id: Optional[
     orders = list(ORDERS.values())
     if customer_id:
         orders = [o for o in orders if o["customer_id"] == customer_id]
-    
+
     total = len(orders)
     start = (page - 1) * page_size
     end = start + page_size
     items = orders[start:end]
-    
+
     return {
         "items": items,
         "total": total,
@@ -145,7 +165,12 @@ async def get_inventory(product_id: str):
 async def list_inventory():
     return {
         "items": [
-            {"product_id": p["product_id"], "product_name": p["name"], "quantity_available": p["stock"], "unit_price": p["price"]}
+            {
+                "product_id": p["product_id"],
+                "product_name": p["name"],
+                "quantity_available": p["stock"],
+                "unit_price": p["price"],
+            }
             for p in PRODUCTS.values()
         ]
     }
@@ -153,4 +178,4 @@ async def list_inventory():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=9000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
