@@ -26,20 +26,20 @@ jobs:
           cache: pip
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
-      - name: Start mock API
-        run: python -m uvicorn mocks.mock_api:app --host 127.0.0.1 --port 9000 > /tmp/mock-api.log 2>&1 &
-      - name: Wait for mock API
+      - name: Run smoke tests against mock API
         run: |
+          python -m uvicorn mocks.mock_api:app --host 127.0.0.1 --port 8000 > /tmp/mock-api.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           for i in {1..30}; do
-            if curl --fail --silent http://127.0.0.1:9000/health >/dev/null; then
-              exit 0
+            if curl --fail --silent http://127.0.0.1:8000/health >/dev/null; then
+              pytest tests/ -m smoke -v --tb=short
+              exit $?
             fi
             sleep 1
           done
           cat /tmp/mock-api.log
           exit 1
-      - name: Run smoke tests
-        run: pytest tests/ -m smoke -v --tb=short
       - name: Upload reports
         if: always()
         uses: actions/upload-artifact@v7
@@ -59,19 +59,20 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
       - run: python -m pip install -r requirements.txt
-      - name: Start mock API
-        run: python -m uvicorn mocks.mock_api:app --host 127.0.0.1 --port 9000 > /tmp/mock-api.log 2>&1 &
-      - name: Wait for mock API
+      - name: Run API tests against mock API
         run: |
+          python -m uvicorn mocks.mock_api:app --host 127.0.0.1 --port 8000 > /tmp/mock-api.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           for i in {1..30}; do
-            if curl --fail --silent http://127.0.0.1:9000/health >/dev/null; then
-              exit 0
+            if curl --fail --silent http://127.0.0.1:8000/health >/dev/null; then
+              pytest tests/api/ -v --html=reports/api_report.html --self-contained-html --junitxml=reports/api_junit.xml
+              exit $?
             fi
             sleep 1
           done
           cat /tmp/mock-api.log
           exit 1
-      - run: pytest tests/api/ -v --html=reports/api_report.html --self-contained-html --junitxml=reports/api_junit.xml
       - name: Upload report
         if: always()
         uses: actions/upload-artifact@v7
@@ -114,19 +115,20 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
       - run: python -m pip install -r requirements.txt
-      - name: Start mock API
-        run: python -m uvicorn mocks.mock_api:app --host 127.0.0.1 --port 9000 > /tmp/mock-api.log 2>&1 &
-      - name: Wait for mock API
+      - name: Run integration tests against mock API
         run: |
+          python -m uvicorn mocks.mock_api:app --host 127.0.0.1 --port 8000 > /tmp/mock-api.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           for i in {1..30}; do
-            if curl --fail --silent http://127.0.0.1:9000/health >/dev/null; then
-              exit 0
+            if curl --fail --silent http://127.0.0.1:8000/health >/dev/null; then
+              pytest tests/integration/ -v --html=reports/integration_report.html --self-contained-html
+              exit $?
             fi
             sleep 1
           done
           cat /tmp/mock-api.log
           exit 1
-      - run: pytest tests/integration/ -v --html=reports/integration_report.html --self-contained-html
 
   load-tests:
     name: Load tests
@@ -140,19 +142,20 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
       - run: python -m pip install -r requirements.txt
-      - name: Start mock API
-        run: python -m uvicorn mocks.mock_api:app --host 127.0.0.1 --port 9000 > /tmp/mock-api.log 2>&1 &
-      - name: Wait for mock API
+      - name: Run load test against mock API
         run: |
+          python -m uvicorn mocks.mock_api:app --host 127.0.0.1 --port 8000 > /tmp/mock-api.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           for i in {1..30}; do
-            if curl --fail --silent http://127.0.0.1:9000/health >/dev/null; then
-              exit 0
+            if curl --fail --silent http://127.0.0.1:8000/health >/dev/null; then
+              locust -f tests/performance/locustfile.py --headless -u 50 -r 5 -t 30s --host http://127.0.0.1:8000 --csv=reports/load_test
+              exit $?
             fi
             sleep 1
           done
           cat /tmp/mock-api.log
           exit 1
-      - run: locust -f tests/performance/locustfile.py --headless -u 50 -r 5 -t 30s --host http://127.0.0.1:9000 --csv=reports/load_test
 
   quality-gate:
     name: Quality gate
