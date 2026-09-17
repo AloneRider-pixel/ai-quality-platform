@@ -27,9 +27,17 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
       - name: Start mock API
-        run: python mocks/mock_api.py > /tmp/mock-api.log 2>&1 &
+        run: python -m uvicorn mocks.mock_api:app --host 127.0.0.1 --port 9000 > /tmp/mock-api.log 2>&1 &
       - name: Wait for mock API
-        run: sleep 3
+        run: |
+          for i in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:9000/health >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/mock-api.log
+          exit 1
       - name: Run smoke tests
         run: pytest tests/ -m smoke -v --tb=short
       - name: Upload reports
@@ -51,8 +59,18 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
       - run: python -m pip install -r requirements.txt
-      - run: python mocks/mock_api.py > /tmp/mock-api.log 2>&1 &
-      - run: sleep 3
+      - name: Start mock API
+        run: python -m uvicorn mocks.mock_api:app --host 127.0.0.1 --port 9000 > /tmp/mock-api.log 2>&1 &
+      - name: Wait for mock API
+        run: |
+          for i in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:9000/health >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/mock-api.log
+          exit 1
       - run: pytest tests/api/ -v --html=reports/api_report.html --self-contained-html --junitxml=reports/api_junit.xml
       - name: Upload report
         if: always()
@@ -96,8 +114,18 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
       - run: python -m pip install -r requirements.txt
-      - run: python mocks/mock_api.py > /tmp/mock-api.log 2>&1 &
-      - run: sleep 3
+      - name: Start mock API
+        run: python -m uvicorn mocks.mock_api:app --host 127.0.0.1 --port 9000 > /tmp/mock-api.log 2>&1 &
+      - name: Wait for mock API
+        run: |
+          for i in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:9000/health >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/mock-api.log
+          exit 1
       - run: pytest tests/integration/ -v --html=reports/integration_report.html --self-contained-html
 
   load-tests:
@@ -112,9 +140,19 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
       - run: python -m pip install -r requirements.txt
-      - run: python mocks/mock_api.py > /tmp/mock-api.log 2>&1 &
-      - run: sleep 3
-      - run: locust -f tests/performance/locustfile.py --headless -u 50 -r 5 -t 30s --host http://localhost:9000 --csv=reports/load_test
+      - name: Start mock API
+        run: python -m uvicorn mocks.mock_api:app --host 127.0.0.1 --port 9000 > /tmp/mock-api.log 2>&1 &
+      - name: Wait for mock API
+        run: |
+          for i in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:9000/health >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/mock-api.log
+          exit 1
+      - run: locust -f tests/performance/locustfile.py --headless -u 50 -r 5 -t 30s --host http://127.0.0.1:9000 --csv=reports/load_test
 
   quality-gate:
     name: Quality gate
