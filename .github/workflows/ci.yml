@@ -1,4 +1,4 @@
-name: AI Quality CI/CD Pipeline
+name: AI Quality CI
 
 on:
   push:
@@ -6,74 +6,76 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    - cron: '0 6 * * *'  # Daily at 6 AM
+    - cron: '0 6 * * *'
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: '3.11'
 
 jobs:
-  # ─── Smoke Tests ───
   smoke-tests:
-    name: Smoke Tests
+    name: Smoke tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: 'pip'
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: python -m pip install -r requirements.txt
       - name: Start mock API
-        run: python mocks/mock_api.py &
-      - name: Wait for services
+        run: python mocks/mock_api.py > /tmp/mock-api.log 2>&1 &
+      - name: Wait for mock API
         run: sleep 3
       - name: Run smoke tests
         run: pytest tests/ -m smoke -v --tb=short
-      - name: Upload smoke report
+      - name: Upload reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: smoke-report
           path: reports/
+          if-no-files-found: ignore
 
-  # ─── API Tests ───
   api-tests:
-    name: API Tests
-    runs-on: ubuntu-latest
+    name: API tests
     needs: smoke-tests
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: 'pip'
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Start mock API
-        run: python mocks/mock_api.py &
-      - name: Wait for services
-        run: sleep 3
-      - name: Run API tests
-        run: pytest tests/api/ -v --html=reports/api_report.html --self-contained-html --junitxml=reports/api_junit.xml
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - run: python mocks/mock_api.py > /tmp/mock-api.log 2>&1 &
+      - run: sleep 3
+      - run: pytest tests/api/ -v --html=reports/api_report.html --self-contained-html --junitxml=reports/api_junit.xml
       - name: Upload report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: api-test-report
           path: reports/
+          if-no-files-found: ignore
 
-  # ─── LLM Quality Tests ───
   llm-tests:
-    name: LLM Quality Tests
-    runs-on: ubuntu-latest
+    name: LLM quality tests
     needs: smoke-tests
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: 'pip'
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: python -m pip install -r requirements.txt
       - name: Run LLM tests
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: pytest tests/llm/ -v --html=reports/llm_report.html --self-contained-html --junitxml=reports/llm_junit.xml
       - name: Upload report
         if: always()
@@ -81,56 +83,46 @@ jobs:
         with:
           name: llm-test-report
           path: reports/
+          if-no-files-found: ignore
 
-  # ─── Integration Tests ───
   integration-tests:
-    name: Integration Tests
-    runs-on: ubuntu-latest
+    name: Integration tests
     needs: [api-tests, llm-tests]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: 'pip'
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Start mock API
-        run: python mocks/mock_api.py &
-      - name: Wait for services
-        run: sleep 3
-      - name: Run integration tests
-        run: pytest tests/integration/ -v --html=reports/integration_report.html --self-contained-html
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - run: python mocks/mock_api.py > /tmp/mock-api.log 2>&1 &
+      - run: sleep 3
+      - run: pytest tests/integration/ -v --html=reports/integration_report.html --self-contained-html
 
-  # ─── Load Tests ───
   load-tests:
-    name: Load Tests
-    runs-on: ubuntu-latest
+    name: Load tests
     needs: integration-tests
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: 'pip'
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Start mock API
-        run: python mocks/mock_api.py &
-      - name: Wait for services
-        run: sleep 3
-      - name: Run load test
-        run: locust -f tests/performance/locustfile.py --headless -u 50 -r 5 -t 30s --host http://localhost:9000 --csv=reports/load_test
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - run: python mocks/mock_api.py > /tmp/mock-api.log 2>&1 &
+      - run: sleep 3
+      - run: locust -f tests/performance/locustfile.py --headless -u 50 -r 5 -t 30s --host http://localhost:9000 --csv=reports/load_test
 
-  # ─── Quality Gate ───
   quality-gate:
-    name: Quality Gate
-    runs-on: ubuntu-latest
+    name: Quality gate
     needs: [api-tests, llm-tests, integration-tests]
     if: always()
+    runs-on: ubuntu-latest
     steps:
-      - name: Check results
-        run: |
-          echo "✅ All test stages completed"
-          echo "Check individual job results for pass/fail status"
+      - name: Fail if required test stage failed
+        if: needs.api-tests.result != 'success' || needs.llm-tests.result != 'success' || needs.integration-tests.result != 'success'
+        run: exit 1
+      - run: echo 'All required quality stages passed.'
