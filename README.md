@@ -1,196 +1,158 @@
 # 🧪 AI Quality Engineering & API Automation Platform
 
-**Comprehensive testing platform** for APIs, AI/LLM applications, and performance — with automated quality dashboards and CI/CD integration.
+[![CI](https://github.com/AloneRider-pixel/ai-quality-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/AloneRider-pixel/ai-quality-platform/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
----
+**Test engineering platform for APIs, AI/LLM applications, browser flows, and performance.**
 
-## 🏗️ Architecture
+> **Portfolio focus:** Pytest architecture + API automation + LLM evaluation + contract testing + performance engineering + CI/CD.
 
-```
-Application APIs / LLM Endpoints
-           ↓
-    PyTest Framework
-    (Fixtures + Helpers)
-           ↓
-  ┌────────┼────────┬──────────┐
-  ↓        ↓        ↓          ↓
-API     Integration  LLM Eval   UI
-Tests   Tests        Tests     Tests
-  │        │        │          │
-  └────────┼────────┴──────────┘
-           ↓
-    Locust Load Tests
-           ↓
-    GitHub Actions CI/CD
-           ↓
-  ┌────────┴────────┐
-  ↓                  ↓
-Test Reports     Grafana
-(HTML/JSON)     Dashboard
+## Architecture
+
+```text
+APIs / LLM endpoints / web apps
+              ↓
+       Pytest framework
+       ├── API tests
+       ├── integration tests
+       ├── contract tests
+       ├── LLM evaluations
+       └── Playwright UI tests
+              ↓
+        Locust load tests
+              ↓
+       GitHub Actions CI
+              ↓
+   Reports + quality metrics
 ```
 
----
+## What this project demonstrates
 
-## ✨ Features
+### Test architecture
+- Reusable fixtures, clients, assertions, and data factories.
+- API coverage for CRUD, validation, authentication, pagination, and error handling.
+- Integration tests for multi-service workflows.
+- Contract testing for schema compatibility.
+- Playwright-based browser automation.
 
-### Testing Framework
-- **Reusable PyTest Framework** — Base classes, fixtures, helpers, assertions
-- **API Test Suite** — CRUD, validation, error handling, pagination tests
-- **Integration Tests** — End-to-end workflow testing across services
-- **Regression Suite** — Automated regression detection with change impact analysis
-- **Contract Testing** — API schema validation and backward compatibility checks
-- **UI Automation** — Playwright-based browser testing
+### AI/LLM quality
+- RAG evaluation for faithfulness, relevance, recall, and precision.
+- Hallucination checks.
+- Prompt-regression tests against golden cases.
+- Embedding-based semantic comparison.
+- Content-safety scoring.
 
-### AI/LLM Quality
-- **RAG Evaluation** — Faithfulness, relevance, recall, precision metrics
-- **Hallucination Tests** — NLI-based detection of fabricated responses
-- **Prompt Regression** — Golden set testing for prompt changes
-- **Semantic Similarity** — Embedding-based response comparison
-- **Toxicity & Bias** — Content safety scoring
+### Performance engineering
+- Locust-based load, stress, spike, and sustained testing.
+- P50/P95/P99 latency tracking.
+- Configurable load profiles for repeatable experiments.
 
-### Performance
-- **Load Testing** — Locust-based HTTP load tests
-- **Stress Testing** — Breakpoint identification
-- **Spike Testing** — Sudden load surge handling
-- **Latency Profiling** — P50/P95/P99 distribution tracking
+### CI/CD and reporting
+- Parallelized GitHub Actions testing.
+- HTML/JSON and Allure reporting.
+- Prometheus/Grafana quality dashboards.
+- Failure notifications for CI workflows.
 
-### Infrastructure
-- **Mock Services** — FastAPI-based mock servers for isolated testing
-- **Test Data Generation** — Factory pattern with Faker
-- **CI/CD Pipeline** — GitHub Actions with parallel test execution
-- **HTML Reports** — Rich test reports with screenshots and traces
-- **Quality Dashboard** — Real-time Grafana dashboard with test metrics
-- **Alerting** — Slack/email notifications on test failures
+## Test matrix
 
----
+The repository is organized around multiple test layers rather than a single end-to-end suite:
 
-## 🛠️ Tech Stack
+| Layer | Example scope |
+|---|---|
+| API | CRUD, auth, validation, pagination |
+| Integration | End-to-end service workflows |
+| LLM | RAG, hallucination, prompt regression |
+| Contract | Schema/backward-compatibility checks |
+| UI | Browser workflows with Playwright |
+| Performance | Load, stress, spike, latency |
+
+## Technology stack
 
 | Layer | Technology |
-|-------|-----------|
-| Framework | Python 3.11, PyTest 7.x, PyTest-Asyncio |
-| API Testing | Requests, HTTPX, Schemathesis |
-| AI Testing | OpenAI, LangChain, RAGAS |
-| UI Testing | Playwright |
-| Load Testing | Locust |
-| Mock Services | FastAPI, Respx |
+|---|---|
+| Test framework | Python 3.11, Pytest, Pytest-Asyncio |
+| API | Requests, HTTPX, Schemathesis |
+| AI quality | OpenAI, LangChain, RAGAS |
+| UI | Playwright |
+| Performance | Locust |
+| Mocking | FastAPI, Respx |
+| Reporting | Pytest-HTML, Allure |
+| Observability | Prometheus, Grafana |
 | CI/CD | GitHub Actions |
-| Reporting | PyTest-HTML, Allure |
-| Dashboard | Grafana, Prometheus |
-| Data | Faker, Factory Boy |
+| Test data | Faker, Factory Boy |
 
----
+## Repository structure
 
-## 🚀 Quick Start
+```text
+ai-quality-platform/
+├── framework/                  # Reusable test framework
+├── tests/
+│   ├── api/
+│   ├── integration/
+│   ├── llm/
+│   ├── ui/
+│   ├── contract/
+│   └── performance/
+├── mocks/                      # Mock API / LLM services
+├── reporting/                  # Reports and metric collection
+├── dashboard/                  # Grafana + Prometheus
+├── conftest.py
+├── pytest.ini
+├── requirements.txt
+└── .github/workflows/ci.yml
+```
 
-### Prerequisites
-- Python 3.11+
-- Docker (for mock services)
+## Local development
 
-### 1. Clone & Setup
+### Setup
 
 ```bash
 git clone https://github.com/AloneRider-pixel/ai-quality-platform.git
 cd ai-quality-platform
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 playwright install chromium
 ```
 
-### 2. Run All Tests
+### Run tests
 
 ```bash
-# Full test suite
-pytest tests/ -v --html=reports/report.html
-
-# API tests only
+pytest tests/ -v
 pytest tests/api/ -v
-
-# LLM evaluation only
 pytest tests/llm/ -v
+```
 
-# Load tests
+### Run a load test
+
+```bash
 locust -f tests/performance/locustfile.py --headless -u 100 -r 10 -t 60s
 ```
 
-### 3. View Reports
+## Quality reporting
 
 ```bash
-open reports/report.html
+pytest tests/ -v --html=reports/report.html
 ```
 
-### 4. Start Dashboard
+For the dashboard stack:
 
 ```bash
 docker-compose up -d grafana prometheus
-# Open http://localhost:3000
 ```
 
----
+## Important benchmark practice
 
-## 📁 Project Structure
+The test counts and performance scenarios in this repository should be treated as **test-suite scope**, not external product-quality claims. Published benchmark numbers should include the dataset, environment, workload, tool versions, and reproducible commands.
 
-```
-ai-quality-platform/
-├── framework/                  # Reusable testing framework
-│   ├── base_test.py            # Base test classes
-│   ├── api_client.py           # HTTP client wrapper
-│   ├── assertions.py           # Custom assertions
-│   ├── fixtures.py             # Shared PyTest fixtures
-│   ├── data_factories.py       # Test data generators
-│   └── reporters.py            # Custom reporting
-├── tests/
-│   ├── api/                    # API test suites
-│   │   ├── test_orders.py
-│   │   ├── test_products.py
-│   │   ├── test_auth.py
-│   │   └── test_pagination.py
-│   ├── integration/            # Integration tests
-│   │   ├── test_order_flow.py
-│   │   └── test_user_journey.py
-│   ├── llm/                    # LLM/AI quality tests
-│   │   ├── test_rag_evaluation.py
-│   │   ├── test_hallucination.py
-│   │   ├── test_prompt_regression.py
-│   │   └── test_toxicity.py
-│   ├── ui/                     # UI automation
-│   │   └── test_web_pages.py
-│   ├── contract/               # Contract testing
-│   │   └── test_api_contracts.py
-│   └── performance/            # Load tests
-│       ├── locustfile.py
-│       └── k6_scripts.js
-├── mocks/                      # Mock services
-│   ├── mock_api.py
-│   └── mock_llm.py
-├── reporting/                  # Report generation
-│   ├── html_report.py
-│   └── metrics_collector.py
-├── dashboard/                  # Grafana dashboard
-│   ├── docker-compose.yml
-│   ├── prometheus.yml
-│   └── grafana/
-├── conftest.py                 # Root PyTest config
-├── pytest.ini                  # PyTest configuration
-├── requirements.txt
-├── .github/workflows/ci.yml   # CI/CD pipeline
-└── README.md
-```
+## Roadmap
 
----
+- Versioned LLM evaluation datasets and regression thresholds.
+- OpenTelemetry integration for test-to-service correlation.
+- Consumer-driven contract testing.
+- Distributed load generation.
+- CI quality gates based on configurable SLO thresholds.
 
-## 📊 Test Categories
-
-| Category | Count | Description |
-|----------|-------|-------------|
-| API Tests | 50+ | CRUD, validation, auth, pagination, error handling |
-| Integration Tests | 20+ | End-to-end workflows across services |
-| LLM Tests | 30+ | RAG eval, hallucination, prompt regression |
-| Contract Tests | 15+ | Schema validation, backward compatibility |
-| UI Tests | 10+ | Page loads, forms, navigation |
-| Load Tests | 5+ | Sustained, spike, stress scenarios |
-
----
-
-## 📝 License
+## License
 
 MIT
