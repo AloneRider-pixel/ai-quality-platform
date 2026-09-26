@@ -6,6 +6,7 @@ import base64
 import re
 import uuid
 from datetime import datetime
+import json
 from typing import Dict, Optional
 
 from fastapi import Depends, FastAPI, Header, HTTPException
@@ -55,7 +56,10 @@ def issue_mock_jwt(email: str) -> str:
     def segment(value: str) -> str:
         return base64.urlsafe_b64encode(value.encode()).decode().rstrip("=")
 
-    return f'{segment("{\"alg\":\"none\",\"typ\":\"JWT\"}")}.{segment(f"{{\"sub\":\"{email}\",\"type\":\"mock\"}}")}.{segment(uuid.uuid4().hex)}'
+    header = segment(json.dumps({"alg": "none", "typ": "JWT"}, separators=(",", ":")))
+    payload = segment(json.dumps({"sub": email, "type": "mock"}, separators=(",", ":")))
+    signature = segment(uuid.uuid4().hex)
+    return f"{header}.{payload}.{signature}"
 
 
 def require_auth(authorization: Optional[str] = Header(default=None)) -> str:

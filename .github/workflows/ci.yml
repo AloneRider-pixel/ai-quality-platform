@@ -82,7 +82,7 @@ jobs:
           if-no-files-found: ignore
 
   llm-tests:
-    name: LLM quality tests
+    name: LLM quality regression (deterministic fixtures)
     needs: smoke-tests
     runs-on: ubuntu-latest
     steps:
@@ -92,7 +92,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
       - run: python -m pip install -r requirements.txt
-      - name: Run LLM tests
+      - name: Run deterministic LLM fixture tests
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: pytest tests/llm/ -v --html=reports/llm_report.html --self-contained-html --junitxml=reports/llm_junit.xml
