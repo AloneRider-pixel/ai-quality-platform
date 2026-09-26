@@ -38,6 +38,15 @@ class ECommerceLoadTest(HttpUser):
         else:
             self.token = None
             self.headers = {}
+        self.order_id = None
+        if self.token:
+            order_resp = self.client.post("/api/v1/orders", json={
+                "customer_id": self.email,
+                "product_id": "PROD-001",
+                "quantity": 1,
+            }, headers=self.headers)
+            if order_resp.status_code in (200, 201):
+                self.order_id = order_resp.json().get("order_id")
     
     @task(5)
     def create_order(self):
@@ -62,8 +71,9 @@ class ECommerceLoadTest(HttpUser):
         """Get a specific order."""
         if not self.token:
             return
-        order_id = f"ORD-{random.randint(1, 100):06d}"
-        self.client.get(f"/api/v1/orders/{order_id}", headers=self.headers, name="/api/v1/orders/{id} [GET]")
+        if not self.order_id:
+            return
+        self.client.get(f"/api/v1/orders/{self.order_id}", headers=self.headers, name="/api/v1/orders/{id} [GET]")
     
     @task(3)
     def check_health(self):
