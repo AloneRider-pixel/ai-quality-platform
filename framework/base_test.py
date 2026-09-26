@@ -33,8 +33,11 @@ class BaseAPITest:
             )
 
     def assert_response_time(self, response, max_ms: float = 5000):
-        """Assert response was received within time limit."""
-        pass
+        """Assert response was received within the configured time budget."""
+        elapsed_ms = response.elapsed.total_seconds() * 1000
+        assert elapsed_ms <= max_ms, (
+            f"Response took {elapsed_ms:.1f}ms, exceeding the {max_ms:.1f}ms budget"
+        )
 
 
 class BaseLLMTest:
