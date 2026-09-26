@@ -1,0 +1,16 @@
+{
+  "evaluation": "llm-quality-regression",
+  "mode": "deterministic-fixtures",
+  "live_provider_required": false,
+  "dataset_path": "tests/llm/",
+  "production_quality_claims_allowed": false,
+  "required_provenance_for_published_metrics": [
+    "dataset or workload version",
+    "model/provider version when live inference is used",
+    "sample count",
+    "test configuration",
+    "environment",
+    "commit SHA",
+    "generated report"
+  ]
+}
