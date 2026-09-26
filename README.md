@@ -129,6 +129,12 @@ pytest tests/llm/ -v
 locust -f tests/performance/locustfile.py --headless -u 100 -r 10 -t 60s
 ```
 
+## Evaluation integrity
+
+The repository's current LLM-quality suite uses deterministic fixtures and simulated responses so regression checks remain reproducible without a live provider or API key. It is evidence of test-harness behavior, not evidence of production model quality.
+
+Live-provider benchmarks should be added only as an explicitly opt-in workflow and must record the model, provider, dataset, sample count, configuration, timestamp, and commit alongside the results.
+
 ## Quality reporting
 
 ```bash
