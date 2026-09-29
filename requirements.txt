@@ -32,7 +32,7 @@ uvicorn==0.53.0
 
 # Test Data
 faker==22.6.0
-factory-boy==3.3.0
+factory-boy==3.3.3
 
 # Utilities
 pydantic==2.5.3
