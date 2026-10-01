@@ -25,7 +25,7 @@ playwright==1.41.0
 locust==2.23.1
 
 # Mock Services
-fastapi==0.109.0
+fastapi==0.141.1
 uvicorn==0.53.0
 
 # Test Data
