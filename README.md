@@ -1,56 +1,56 @@
-# 🧪 AI Quality Engineering & API Automation Platform
+# AI Quality Engineering & API Automation Platform
 
 [![CI](https://github.com/AloneRider-pixel/ai-quality-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/AloneRider-pixel/ai-quality-platform/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/AloneRider-pixel/ai-quality-platform/actions/workflows/codeql.yml/badge.svg)](https://github.com/AloneRider-pixel/ai-quality-platform/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Test-engineering platform covering API, integration, contract, deterministic LLM-quality, and performance validation.
+Reusable test-engineering platform for API, integration, contract, deterministic LLM-quality, and performance validation.
 
 ## Test architecture
 
 ```text
-Mock APIs / LLM fixtures
+Mock APIs / deterministic fixtures
           ↓
-      Pytest framework
-      ├── API tests
-      ├── integration tests
-      ├── contract tests
-      └── LLM regression tests
+Reusable Pytest framework
+    ├── API
+    ├── integration
+    ├── contract
+    └── LLM regression
           ↓
       Locust workloads
           ↓
-      GitHub Actions
+   GitHub Actions
           ↓
-      Reports + quality gates
+ Reports + quality gates
 ```
 
 ## What it demonstrates
 
-- Reusable fixtures, clients, assertions, and data factories.
-- API validation for authentication, CRUD, pagination, and error handling.
-- Contract checks for API schemas.
+- Shared clients, fixtures, assertions, and data factories.
+- Authentication, CRUD, pagination, and error-path testing.
+- Contract validation for API schemas.
 - Deterministic RAG, hallucination, and prompt-regression tests.
-- Locust load, stress, spike, and sustained workload scenarios.
-- HTML/JUnit reporting plus Prometheus/Grafana instrumentation.
-- Fail-closed CI quality gating for required stages.
+- Locust load/stress/spike/sustained scenarios.
+- HTML/JUnit reporting and Prometheus/Grafana integration.
+- Fail-closed CI stages with an explicit quality gate.
 
 ## Stack
 
-| Layer | Technology |
+| Area | Technology |
 |---|---|
-| Framework | Python 3.11, Pytest, pytest-asyncio |
-| API | HTTPX, Requests, Schemathesis |
-| AI quality | OpenAI-compatible fixtures, LangChain/RAG tooling |
+| Test framework | Python 3.11, Pytest, pytest-asyncio |
+| API testing | HTTPX, Requests, Schemathesis |
+| AI quality | deterministic provider-compatible fixtures, RAG tooling |
 | Performance | Locust |
 | Mocking | FastAPI, Respx |
 | Reporting | Pytest-HTML, Allure |
 | Observability | Prometheus, Grafana |
 | CI | GitHub Actions |
 
-## Repository layout
+## Repository map
 
 ```text
-framework/              # Reusable test abstractions
+framework/
 tests/api/
 tests/integration/
 tests/contract/
@@ -72,49 +72,36 @@ cd ai-quality-platform
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-```
-
-Run deterministic tests:
-
-```bash
 pytest tests/ -v
 ```
 
-Load test:
+Load testing:
 
 ```bash
 locust -f tests/performance/locustfile.py --headless -u 100 -r 10 -t 60s
 ```
 
-## CI model
+## Quality-gate contract
 
-The workflow runs smoke, API, deterministic LLM, integration, and load stages, followed by a quality gate. Credentialed live-provider tests are intentionally separate from deterministic CI.
+Credentialed live-provider tests are separate from deterministic CI. Do not change a required stage to make a failing run pass; fix the underlying test, fixture, configuration, or dependency problem.
 
 ## Evaluation integrity
 
-Deterministic fixtures validate the test harness and regression behavior; they do not establish production model quality. A live benchmark should record provider/model, dataset version, sample count, configuration, timestamp, environment, and commit.
+Deterministic fixtures validate harness behavior and regressions. They do not establish production model quality. Any published AI-quality result should state provider/model, dataset version, sample count, configuration, timestamp, environment, and producing commit.
 
-## Reporting
+## Security
 
-```bash
-pytest tests/ -v --html=reports/report.html
-docker compose up -d grafana prometheus
-```
+Keep provider/API credentials outside the repository. Treat test payloads, mock responses, and external API data as untrusted. Preserve least-privilege CI permissions and immutable action references.
+
+## Documentation
+
+- [Verification](docs/verification.md)
+- [Deterministic evaluation](docs/deterministic-evaluation.json)
+- [Engineering notes](docs/ENGINEERING_NOTES.md)
 
 ## Roadmap
 
-- Versioned evaluation datasets and explicit regression thresholds.
-- OpenTelemetry test-to-service correlation.
-- Broader contract-testing integrations.
-- Distributed load generation.
-
-## Review path
-
-Start with [verification](docs/verification.md) and [deterministic-evaluation.json](docs/deterministic-evaluation.json). Review the CI quality gate before modifying which stages are considered required.
-
-## Maintenance standard
-
-Keep test inputs deterministic, isolate credentials, and never convert synthetic fixture scores into production-quality claims.
+Versioned regression datasets, OpenTelemetry correlation, broader contract integrations, and distributed load generation.
 
 ## License
 
