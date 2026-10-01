@@ -1,110 +1,70 @@
 # 🧪 AI Quality Engineering & API Automation Platform
 
 [![CI](https://github.com/AloneRider-pixel/ai-quality-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/AloneRider-pixel/ai-quality-platform/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/AloneRider-pixel/ai-quality-platform/actions/workflows/codeql.yml/badge.svg)](https://github.com/AloneRider-pixel/ai-quality-platform/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Test engineering platform for APIs, AI/LLM applications, browser flows, and performance.**
+Test-engineering platform covering API, integration, contract, deterministic LLM-quality, and performance validation.
 
-> **Portfolio focus:** Pytest architecture + API automation + LLM evaluation + contract testing + performance engineering + CI/CD.
-
-## Architecture
+## Test architecture
 
 ```text
-APIs / LLM endpoints / web apps
-              ↓
-       Pytest framework
-       ├── API tests
-       ├── integration tests
-       ├── contract tests
-       ├── LLM evaluations
-       └── Playwright UI tests
-              ↓
-        Locust load tests
-              ↓
-       GitHub Actions CI
-              ↓
-   Reports + quality metrics
+Mock APIs / LLM fixtures
+          ↓
+      Pytest framework
+      ├── API tests
+      ├── integration tests
+      ├── contract tests
+      └── LLM regression tests
+          ↓
+      Locust workloads
+          ↓
+      GitHub Actions
+          ↓
+      Reports + quality gates
 ```
 
-## What this project demonstrates
+## What it demonstrates
 
-### Test architecture
 - Reusable fixtures, clients, assertions, and data factories.
-- API coverage for CRUD, validation, authentication, pagination, and error handling.
-- Integration tests for multi-service workflows.
-- Contract testing for schema compatibility.
-- Playwright-based browser automation.
+- API validation for authentication, CRUD, pagination, and error handling.
+- Contract checks for API schemas.
+- Deterministic RAG, hallucination, and prompt-regression tests.
+- Locust load, stress, spike, and sustained workload scenarios.
+- HTML/JUnit reporting plus Prometheus/Grafana instrumentation.
+- Fail-closed CI quality gating for required stages.
 
-### AI/LLM quality
-- RAG evaluation for faithfulness, relevance, recall, and precision.
-- Hallucination checks.
-- Prompt-regression tests against golden cases.
-- Embedding-based semantic comparison.
-- Content-safety scoring.
-
-### Performance engineering
-- Locust-based load, stress, spike, and sustained testing.
-- P50/P95/P99 latency tracking.
-- Configurable load profiles for repeatable experiments.
-
-### CI/CD and reporting
-- Parallelized GitHub Actions testing.
-- HTML/JSON and Allure reporting.
-- Prometheus/Grafana quality dashboards.
-- Failure notifications for CI workflows.
-
-## Test matrix
-
-The repository is organized around multiple test layers rather than a single end-to-end suite:
-
-| Layer | Example scope |
-|---|---|
-| API | CRUD, auth, validation, pagination |
-| Integration | End-to-end service workflows |
-| LLM | RAG, hallucination, prompt regression |
-| Contract | Schema/backward-compatibility checks |
-| UI | Browser workflows with Playwright |
-| Performance | Load, stress, spike, latency |
-
-## Technology stack
+## Stack
 
 | Layer | Technology |
 |---|---|
-| Test framework | Python 3.11, Pytest, Pytest-Asyncio |
-| API | Requests, HTTPX, Schemathesis |
-| AI quality | OpenAI, LangChain, RAGAS |
-| UI | Playwright |
+| Framework | Python 3.11, Pytest, pytest-asyncio |
+| API | HTTPX, Requests, Schemathesis |
+| AI quality | OpenAI-compatible fixtures, LangChain/RAG tooling |
 | Performance | Locust |
 | Mocking | FastAPI, Respx |
 | Reporting | Pytest-HTML, Allure |
 | Observability | Prometheus, Grafana |
-| CI/CD | GitHub Actions |
-| Test data | Faker, Factory Boy |
+| CI | GitHub Actions |
 
-## Repository structure
+## Repository layout
 
 ```text
-ai-quality-platform/
-├── framework/                  # Reusable test framework
-├── tests/
-│   ├── api/
-│   ├── integration/
-│   ├── llm/
-│   ├── ui/
-│   ├── contract/
-│   └── performance/
-├── mocks/                      # Mock API / LLM services
-├── reporting/                  # Reports and metric collection
-├── dashboard/                  # Grafana + Prometheus
-├── conftest.py
-├── pytest.ini
-├── requirements.txt
-└── .github/workflows/ci.yml
+framework/              # Reusable test abstractions
+tests/api/
+tests/integration/
+tests/contract/
+tests/llm/
+tests/performance/
+mocks/
+reporting/
+dashboard/
+pytest.ini
+requirements.txt
+.github/workflows/
 ```
 
-## Local development
-
-### Setup
+## Quick start
 
 ```bash
 git clone https://github.com/AloneRider-pixel/ai-quality-platform.git
@@ -112,61 +72,50 @@ cd ai-quality-platform
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-playwright install chromium
 ```
 
-### Run tests
+Run deterministic tests:
 
 ```bash
 pytest tests/ -v
-pytest tests/api/ -v
-pytest tests/llm/ -v
 ```
 
-### Run a load test
+Load test:
 
 ```bash
 locust -f tests/performance/locustfile.py --headless -u 100 -r 10 -t 60s
 ```
 
+## CI model
+
+The workflow runs smoke, API, deterministic LLM, integration, and load stages, followed by a quality gate. Credentialed live-provider tests are intentionally separate from deterministic CI.
+
 ## Evaluation integrity
 
-The repository's current LLM-quality suite uses deterministic fixtures and simulated responses so regression checks remain reproducible without a live provider or API key. It is evidence of test-harness behavior, not evidence of production model quality.
+Deterministic fixtures validate the test harness and regression behavior; they do not establish production model quality. A live benchmark should record provider/model, dataset version, sample count, configuration, timestamp, environment, and commit.
 
-Live-provider benchmarks should be added only as an explicitly opt-in workflow and must record the model, provider, dataset, sample count, configuration, timestamp, and commit alongside the results.
-
-## Quality reporting
+## Reporting
 
 ```bash
 pytest tests/ -v --html=reports/report.html
+docker compose up -d grafana prometheus
 ```
-
-For the dashboard stack:
-
-```bash
-docker-compose up -d grafana prometheus
-```
-
-## Important benchmark practice
-
-The test counts and performance scenarios in this repository should be treated as **test-suite scope**, not external product-quality claims. Published benchmark numbers should include the dataset, environment, workload, tool versions, and reproducible commands.
 
 ## Roadmap
 
-- Versioned LLM evaluation datasets and regression thresholds.
-- OpenTelemetry integration for test-to-service correlation.
-- Consumer-driven contract testing.
+- Versioned evaluation datasets and explicit regression thresholds.
+- OpenTelemetry test-to-service correlation.
+- Broader contract-testing integrations.
 - Distributed load generation.
-- CI quality gates based on configurable SLO thresholds.
+
+## Review path
+
+Start with [verification](docs/verification.md) and [deterministic-evaluation.json](docs/deterministic-evaluation.json). Review the CI quality gate before modifying which stages are considered required.
+
+## Maintenance standard
+
+Keep test inputs deterministic, isolate credentials, and never convert synthetic fixture scores into production-quality claims.
 
 ## License
 
 MIT
-
-## Repository review path
-
-Start with [verification](docs/verification.md) and the deterministic evaluation manifest in `docs/deterministic-evaluation.json`. The CI quality gate is intentionally fail-closed for smoke, API, LLM, and integration stages.
-
-## Maintenance standard
-
-Keep test data deterministic where possible, isolate credentialed integration tests, and do not convert fixture scores or synthetic workloads into production-quality claims.
