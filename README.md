@@ -162,3 +162,11 @@ The test counts and performance scenarios in this repository should be treated a
 ## License
 
 MIT
+
+## Repository review path
+
+Start with [verification](docs/verification.md) and the deterministic evaluation manifest in `docs/deterministic-evaluation.json`. The CI quality gate is intentionally fail-closed for smoke, API, LLM, and integration stages.
+
+## Maintenance standard
+
+Keep test data deterministic where possible, isolate credentialed integration tests, and do not convert fixture scores or synthetic workloads into production-quality claims.
