@@ -19,7 +19,7 @@ langchain==1.4.0
 sentence-transformers==2.3.1
 
 # UI Testing
-playwright==1.41.0
+playwright==1.63.0
 
 # Load Testing
 locust==2.23.1
