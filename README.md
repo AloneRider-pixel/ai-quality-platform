@@ -6,6 +6,16 @@
 
 Reusable test-engineering platform for API, integration, contract, deterministic LLM-quality, and performance validation.
 
+## What it demonstrates
+
+- Shared clients, fixtures, assertions, and data factories.
+- Authentication, CRUD, pagination, and negative-path testing.
+- Contract validation for API schemas.
+- Deterministic RAG, hallucination, and prompt-regression tests.
+- Locust load/stress/spike/sustained scenarios.
+- HTML/JUnit reporting and Prometheus/Grafana integration.
+- Fail-closed CI stages with explicit quality gates.
+
 ## Test architecture
 
 ```text
@@ -23,16 +33,6 @@ Reusable Pytest framework
           ↓
  Reports + quality gates
 ```
-
-## What it demonstrates
-
-- Shared clients, fixtures, assertions, and data factories.
-- Authentication, CRUD, pagination, and error-path testing.
-- Contract validation for API schemas.
-- Deterministic RAG, hallucination, and prompt-regression tests.
-- Locust load/stress/spike/sustained scenarios.
-- HTML/JUnit reporting and Prometheus/Grafana integration.
-- Fail-closed CI stages with an explicit quality gate.
 
 ## Stack
 
@@ -81,23 +81,29 @@ Load testing:
 locust -f tests/performance/locustfile.py --headless -u 100 -r 10 -t 60s
 ```
 
+Use workload values as examples; they are not production capacity benchmarks.
+
 ## Quality-gate contract
 
-Credentialed live-provider tests are separate from deterministic CI. Do not change a required stage to make a failing run pass; fix the underlying test, fixture, configuration, or dependency problem.
+Credentialed live-provider tests are separate from deterministic CI. Never change a required stage just to make a failing run pass. Fix the underlying test, fixture, configuration, dependency, or environment issue.
 
 ## Evaluation integrity
 
-Deterministic fixtures validate harness behavior and regressions. They do not establish production model quality. Any published AI-quality result should state provider/model, dataset version, sample count, configuration, timestamp, environment, and producing commit.
+Deterministic fixtures validate the harness and regression behavior. They do not establish production model quality. Published AI-quality or performance results should identify provider/model, dataset version, sample count, configuration, timestamp, environment, workload, and producing commit.
 
 ## Security
 
-Keep provider/API credentials outside the repository. Treat test payloads, mock responses, and external API data as untrusted. Preserve least-privilege CI permissions and immutable action references.
+Keep provider/API credentials outside the repository. Treat test payloads, mock responses, model output, and external API data as untrusted. Preserve least-privilege CI permissions and immutable action references.
 
 ## Documentation
 
 - [Verification](docs/verification.md)
 - [Deterministic evaluation](docs/deterministic-evaluation.json)
 - [Engineering notes](docs/ENGINEERING_NOTES.md)
+
+## Contribution standard
+
+New test utilities should be deterministic where possible, failures should remain observable, and quality gates should stay tied to meaningful assertions rather than coverage-only targets.
 
 ## Roadmap
 
