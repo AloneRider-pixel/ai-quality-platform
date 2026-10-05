@@ -38,7 +38,7 @@ Reusable Pytest framework
 
 | Area | Technology |
 |---|---|
-| Test framework | Python 3.11, Pytest, pytest-asyncio |
+| Test framework | Python 3.12, Pytest, pytest-asyncio |
 | API testing | HTTPX, Requests, Schemathesis |
 | AI quality | deterministic provider-compatible fixtures, RAG tooling |
 | Performance | Locust |
