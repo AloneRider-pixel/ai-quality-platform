@@ -29,7 +29,7 @@ fastapi==0.141.1
 uvicorn==0.53.0
 
 # Test Data
-faker==22.6.0
+faker==40.40.0
 factory-boy==3.3.0
 
 # Utilities
