@@ -141,7 +141,6 @@ jobs:
     name: Load tests
     needs: integration-tests
     timeout-minutes: 10
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -167,11 +166,11 @@ jobs:
 
   quality-gate:
     name: Quality gate
-    needs: [api-tests, llm-tests, integration-tests]
+    needs: [api-tests, llm-tests, integration-tests, load-tests]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Fail if required test stage failed
-        if: needs.api-tests.result != 'success' || needs.llm-tests.result != 'success' || needs.integration-tests.result != 'success'
+        if: needs.api-tests.result != 'success' || needs.llm-tests.result != 'success' || needs.integration-tests.result != 'success' || needs.load-tests.result != 'success'
         run: exit 1
       - run: echo 'All required quality stages passed.'
