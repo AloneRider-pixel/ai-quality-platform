@@ -34,7 +34,7 @@ factory-boy==3.3.0
 
 # Utilities
 pydantic==2.13.5
-python-dotenv==1.0.0
+python-dotenv==1.2.4
 structlog==26.1.0
 rich==15.0.0
 pandas==3.0.6
