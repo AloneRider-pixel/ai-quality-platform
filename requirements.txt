@@ -4,7 +4,7 @@ pytest-asyncio==1.4.0
 pytest-html==4.2.0
 pytest-xdist==3.8.0
 pytest-ordering==0.6
-allure-pytest==2.13.2
+allure-pytest==2.16.2
 
 # API Testing
 requests==2.34.2
