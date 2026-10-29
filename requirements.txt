@@ -16,7 +16,7 @@ respx==0.23.1
 # AI/LLM Testing
 openai==3.36.0
 langchain==1.4.6
-sentence-transformers==6.1.0
+sentence-transformers==6.2.0
 
 # UI Testing
 playwright==1.64.0
