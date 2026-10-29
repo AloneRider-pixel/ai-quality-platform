@@ -1,6 +1,6 @@
 # Core Framework
 pytest==9.1.1
-pytest-asyncio==1.4.0
+pytest-asyncio==1.4.1
 pytest-html==4.2.0
 pytest-xdist==3.8.0
 pytest-ordering==0.6
