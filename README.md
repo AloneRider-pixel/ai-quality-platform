@@ -13,6 +13,7 @@ Reusable test-engineering platform for API, integration, contract, deterministic
 - Contract validation for API schemas.
 - Deterministic RAG, hallucination, and prompt-regression tests.
 - Locust load/stress/spike/sustained scenarios.
+- Browser end-to-end coverage of the owner's own apps against locally started instances (Playwright).
 - HTML/JUnit reporting and Prometheus/Grafana integration.
 - Fail-closed CI stages with explicit quality gates.
 
@@ -39,6 +40,7 @@ Reusable Pytest framework
 | Area | Technology |
 |---|---|
 | Test framework | Python 3.12, Pytest, pytest-asyncio |
+| Browser E2E | Playwright, pytest-playwright |
 | API testing | HTTPX, Requests, Schemathesis |
 | AI quality | deterministic provider-compatible fixtures, RAG tooling |
 | Performance | Locust |
@@ -56,6 +58,7 @@ tests/integration/
 tests/contract/
 tests/llm/
 tests/performance/
+tests/e2e/
 mocks/
 reporting/
 dashboard/

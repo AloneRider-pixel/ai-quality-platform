@@ -1,0 +1,4 @@
+# Flaky-test quarantine. One entry per line:
+#   tests/e2e/test_x.py::test_name - why it is flaky and what unflakes it
+# Quarantined tests still run and appear in the report; a failure is an
+# xfail, never a silent pass. Remove the entry (with the fix) to graduate.

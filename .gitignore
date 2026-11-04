@@ -15,3 +15,7 @@ allure-results/
 node_modules/
 playwright-report/
 test-results/
+
+# E2E target checkouts and run state
+.e2e-targets/
+.e2e-work/
