@@ -34,3 +34,14 @@ def test_committed_quarantine_file_is_valid():
     # The real file must always parse, so a typo can never silently
     # disable the mechanism.
     load_quarantine()
+
+
+def test_quarantine_share_guard():
+    from tests.e2e.quarantine import exceeds_quarantine_share
+    # Two genuine flakes are always tolerated.
+    assert not exceeds_quarantine_share(2, 13)
+    assert not exceeds_quarantine_share(3, 13)  # 3 <= 25% of 13
+    # Quarantining the whole suite (or even a third of it) is refused.
+    assert exceeds_quarantine_share(4, 13)
+    assert exceeds_quarantine_share(13, 13)
+    assert not exceeds_quarantine_share(1, 0)

@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 from . import targets
-from .quarantine import load_quarantine, quarantine_reason_for
+from .quarantine import MAX_QUARANTINE_SHARE, exceeds_quarantine_share, load_quarantine, quarantine_reason_for
 
 ARTIFACTS_DIR = Path(os.environ.get("E2E_ARTIFACTS_DIR", "reports/e2e-artifacts"))
 WORK_DIR = Path(os.environ.get("E2E_WORK_DIR", ".e2e-work"))
@@ -27,12 +27,23 @@ def pytest_configure(config):
 
 def pytest_collection_modifyitems(items):
     entries = load_quarantine()
+    e2e_items = [i for i in items if "e2e" in i.keywords]
+    quarantined = 0
     for item in items:
         reason = quarantine_reason_for(item.nodeid, entries)
         if reason is not None:
             item.add_marker(pytest.mark.xfail(reason=f"quarantined: {reason}", strict=False))
+            quarantined += 1
         if "live" in item.keywords and os.environ.get("E2E_LIVE") != "1":
             item.add_marker(pytest.mark.skip(reason="live smoke is opt-in (E2E_LIVE=1); read-only checks only"))
+    # Guard: quarantine is a pressure valve for single flaky tests, never a way
+    # to silence the gate. If more than a quarter of the e2e suite would be
+    # quarantined, refuse to run - fix the tests instead.
+    if exceeds_quarantine_share(quarantined, len(e2e_items)):
+        raise pytest.UsageError(
+            f"quarantine.txt would quarantine {quarantined} of {len(e2e_items)} e2e tests "
+            f"(max {MAX_QUARANTINE_SHARE:.0%}). Fix or delete tests instead of silencing the gate."
+        )
 
 
 @pytest.fixture(scope="session")

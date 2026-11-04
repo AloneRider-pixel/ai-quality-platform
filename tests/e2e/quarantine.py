@@ -40,3 +40,13 @@ def quarantine_reason_for(nodeid: str, entries: dict[str, str]) -> str | None:
         if key in nodeid:
             return reason
     return None
+
+MAX_QUARANTINE_SHARE = 0.25
+
+
+def exceeds_quarantine_share(quarantined: int, total: int, share: float = MAX_QUARANTINE_SHARE) -> bool:
+    """True when quarantining would silence more than `share` of the suite
+    (always allowing up to 2 entries for genuinely flaky tests)."""
+    if total <= 0:
+        return False
+    return quarantined > max(2, int(total * share))
