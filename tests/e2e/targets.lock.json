@@ -1,0 +1,14 @@
+{
+  "fraud": {
+    "repo": "AloneRider-pixel/fraud-detection-engine",
+    "sha": "f7c22db3b38ea4b4b9aea89c478a0602146e1328"
+  },
+  "lpl": {
+    "repo": "AloneRider-pixel/learning-path-lab-yottaflex",
+    "sha": "fa06ae0b6e70a4899f51940b7251e678063eb550"
+  },
+  "stocksense": {
+    "repo": "AloneRider-pixel/stocksense-ai",
+    "sha": "8d4faef5a69dbbed7e5e3f1d7ea573b35503d3df"
+  }
+}
