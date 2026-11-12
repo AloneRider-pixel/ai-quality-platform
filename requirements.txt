@@ -24,7 +24,7 @@ pytest-playwright==0.7.2
 pillow==12.3.0
 
 # Load Testing
-locust==2.46.7
+locust==2.47.0
 
 # Mock Services
 fastapi==0.141.1
