@@ -28,7 +28,7 @@ locust==2.46.7
 
 # Mock Services
 fastapi==0.141.1
-uvicorn==0.53.0
+uvicorn==0.54.0
 
 # Test Data
 faker==40.52.0
