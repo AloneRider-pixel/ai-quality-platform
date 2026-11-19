@@ -35,7 +35,7 @@ faker==40.52.0
 factory-boy==3.3.0
 
 # Utilities
-pydantic==2.13.5
+pydantic==2.14.3
 python-dotenv==1.2.4
 structlog==26.1.0
 rich==15.0.0
