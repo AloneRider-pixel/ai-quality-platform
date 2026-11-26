@@ -15,7 +15,7 @@ respx==0.23.1
 
 # AI/LLM Testing
 openai==3.39.0
-langchain==1.4.9
+langchain==1.5.2
 sentence-transformers==6.3.0
 
 # UI Testing
